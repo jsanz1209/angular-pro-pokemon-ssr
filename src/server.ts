@@ -1,3 +1,5 @@
+// server.ts (ESM)
+
 import express from 'express';
 import { join } from 'node:path';
 
@@ -12,14 +14,11 @@ import { getContext } from '@netlify/angular-runtime/context.mjs';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
+// --- Instancias SSR ---
 const app = express();
-
-// --- Motores SSR ---
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Static /browser
- */
+// --- Archivos estáticos de /browser ---
 app.use(
   express.static(browserDistFolder, {
     maxAge: '1y',
@@ -28,37 +27,30 @@ app.use(
   }),
 );
 
-/**
- * SSR para peticiones no estáticas (local / Express)
- */
+// --- SSR en local (Express) ---
 app.use((req, res, next) => {
   angularApp
-    .handle(req) // el adaptador Node entiende el req de Express
+    .handle(req)
     .then((response) =>
       response ? writeResponseToNodeResponse(response, res) : next(),
     )
     .catch(next);
 });
 
-/**
- * Arranque local
- */
+// --- Arranque local (ng serve --ssr, node, PM2) ---
 if (isMainModule(import.meta.url) || process.env['pm_id']) {
   const port = process.env['PORT'] || 4000;
-  app.listen(port, (error) => {
+  app.listen(port, (error?: unknown) => {
     if (error) throw error;
+    // eslint-disable-next-line no-console
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
 }
 
-/**
- * Handler que usa Angular CLI (dev-server) o Firebase Functions si hiciera falta
- */
+// --- Handler para Angular CLI / Firebase Functions (entornos con Express) ---
 export const reqHandler = createNodeRequestHandler(app);
 
-/**
- * ✅ Netlify + AppEngine (recomendado en Angular 18+)
- */
+// --- Netlify: recomendado (AngularNodeAppEngine) ---
 export async function netlifyAppEngineHandler(request: Request): Promise<Response> {
   const context = getContext() || {};
   const result = await angularApp.handle(request as any, context);
