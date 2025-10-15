@@ -1,31 +1,20 @@
-import { AngularAppEngine, createRequestHandler } from '@angular/ssr';
 import {
-  isMainModule
+  AngularNodeAppEngine,
+  CommonEngine,
+  createNodeRequestHandler,
+  isMainModule,
+  writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import { getContext } from '@netlify/angular-runtime/context.mjs';
 import express from 'express';
 import { join } from 'node:path';
+
+import { render } from '@netlify/angular-runtime/common-engine.mjs';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
-const angularAppEngine = new AngularAppEngine()
-
-
-export async function netlifyAppEngineHandler(request: Request): Promise<Response> {
-  const context = getContext();
-
-  // Example API endpoints can be defined here.
-  // Uncomment and define endpoints as necessary.
-  // const pathname = new URL(request.url).pathname;
-  // if (pathname === '/api/hello') {
-  //   return Response.json({ message: 'Hello from the API' });
-  // }
-
-  const result = await angularAppEngine.handle(request, context)
-  return result || new Response('Not found', { status: 404 })
-}
-
+const angularApp = new AngularNodeAppEngine();
+const commonEngine = new CommonEngine();
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -53,14 +42,14 @@ app.use(
 /**
  * Handle all other requests by rendering the Angular application.
  */
-// app.use((req, res, next) => {
-//   angularApp
-//     .handle(req)
-//     .then((response) =>
-//       response ? writeResponseToNodeResponse(response, res) : next(),
-//     )
-//     .catch(next);
-// });
+app.use((req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
+    .catch(next);
+});
 
 /**
  * Start the server if this module is the main entry point, or it is ran via PM2.
@@ -80,4 +69,12 @@ if (isMainModule(import.meta.url) || process.env['pm_id']) {
 /**
  * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
  */
-export const reqHandler = createRequestHandler(netlifyAppEngineHandler)
+export const reqHandler = createNodeRequestHandler(app);
+
+
+export async function netlifyCommonEngineHandler(
+  request: Request,
+  context: any,
+): Promise<Response> {
+  return await render(commonEngine);
+}
