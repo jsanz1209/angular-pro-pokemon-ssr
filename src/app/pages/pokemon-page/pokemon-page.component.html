@@ -1,0 +1,50 @@
+
+@if (pokemonResource.error()) {
+  <div class="error-message">
+    <p>Error loading Pokémon details. Please try again later.</p>
+  </div>
+} @else if (pokemonResource.isLoading()) {
+  <div class="loading-spinner">
+    <p>Loading...</p>
+  </div>
+} @else if (pokemonResource.hasValue()) {
+  @let pokemon = pokemonResource.value();
+
+  <h1 class="text-5xl font-bold mt-5 text-center mb-10">{{ pokemon.name | titlecase }}</h1>
+  <div class="container flex justify-center gap-5">
+    <div class="flex flex-col">
+      <img [src]="pokemon.sprites.other?.['official-artwork']?.front_default"
+           [alt]="pokemon.name"
+           [loading]="'lazy'"
+           class="w-64 h-64" />
+      @if (pokemon.cries.latest !== null) {
+        <audio controls>
+          <source [src]="pokemon.cries.latest" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+      } @else {
+        <p class="text-red-500">No audio available</p>
+      }
+    </div>
+    <div class="pokemon-info flex flex-col gap-2 justify-between">
+      <p class="text-2xl"><strong>Type </strong>
+        @for (type of pokemon.types; track type) {
+          <span>{{ type.type.name | titlecase }}</span>
+        }
+      </p>
+      <p class="text-2xl"><strong>Height </strong> {{ pokemon.height / 10 }} m</p>
+      <p class="text-2xl"><strong>Weight </strong> {{ pokemon.weight / 10 }} kg</p>
+      <p class="text-2xl"><strong>Base Experience </strong> {{ pokemon.base_experience }} XP</p>
+      <hr class="my-5"/>
+      <p class="text-2xl mb-2"><strong>Abilities</strong>
+      <div class="abilities-list flex flex-wrap gap-2">
+        @for (ability of pokemon.abilities; track ability) {
+          @if (ability.is_hidden) {
+            <span class="hidden-ability bg-white text-gray-800 font-semibold text-sm rounded-md p-2">Hidden</span>
+          }
+          <span class="ability bg-white text-gray-800 font-semibold text-sm rounded-md p-2">{{ ability.ability?.name | titlecase }}</span>
+        }
+      </div>
+    </div>
+  </div>
+}
