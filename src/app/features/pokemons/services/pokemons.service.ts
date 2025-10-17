@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { delay, map, Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { PokemonAPIResponse, PokemonFormatted } from '../interfaces/pokemon-api-response';
 import { PokemonDetailApiResponse } from '../interfaces/pokemon-detail';
 
@@ -17,7 +17,7 @@ export class PokemonsService {
     const offset = (page - 1) * limit;
     return this._httpClient.get<PokemonAPIResponse>(`https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`)
       .pipe(
-        delay(500),
+        // delay(500),
         map(response => (
           this.count.set(response.count),
           response.results.map(pokemon => ({
@@ -29,7 +29,7 @@ export class PokemonsService {
       );
   }
 
-  loadPokemon(id: number): Observable<PokemonDetailApiResponse> {
-    return this._httpClient.get<PokemonDetailApiResponse>(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  loadPokemon(name: string): Observable<PokemonDetailApiResponse> {
+    return this._httpClient.get<PokemonDetailApiResponse>(`https://pokeapi.co/api/v2/pokemon/${name}`);
   }
 }

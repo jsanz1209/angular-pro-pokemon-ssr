@@ -26,7 +26,7 @@ export class PokemonsPageComponent {
   }).asReadonly();
 
   currentPage = toSignal(
-    this._activatedRoute.queryParamMap.pipe(
+    this._activatedRoute.paramMap.pipe(
       map(params => Number(params.get('page')) || 1),
       tap(page => {
         this._titleSrv.setTitle(`Pokemons - Page ${page}`);
@@ -42,22 +42,14 @@ export class PokemonsPageComponent {
 
   onPreviousPage() {
     if (this.currentPage() > 1) {
-      this._router.navigate([], {
-        relativeTo: this._activatedRoute,
-        queryParams: { page: this.currentPage() - 1 },
-        queryParamsHandling: 'merge',
-      });
+      this._router.navigate(['/pokemons/page', this.currentPage() - 1]);
       this.pokemosnResource.reload();
     }
   }
 
   onNextPage() {
     console.log(this.maximumPage());
-    this._router.navigate([], {
-      relativeTo: this._activatedRoute,
-      queryParams: { page: this.currentPage() + 1 },
-      queryParamsHandling: 'merge',
-    });
+    this._router.navigate(['/pokemons/page', this.currentPage() + 1]);
     this.pokemosnResource.reload();
 
   }
